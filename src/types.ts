@@ -1,0 +1,14 @@
+export type Meeting={id:string;title:string;date:string;scheduled:string;category:string;body:string;slug:string;file:string};
+export type Affiliation={id:string;code:string;name:string};
+export type Speaker={id:string;name:string;a:number};
+export type Topic={id:string;key:string;name:string};
+export type Statement=[number,number,number,number,number,number[],string,number];
+export type Index={schema:number;meetings:Meeting[];affiliations:Affiliation[];speakers:Speaker[];topics:Topic[];statements:Statement[]};
+export type Manifest={schema:number;index:string;exportedAt:string;discovered:number;recordings:number;interventions:number;speakers:number;affiliations:number;topics:number;unnamedInterventions:number;dateFrom:string;dateTo:string;skippedFiles:unknown[];indexBytes:number};
+export type Meta=Omit<Index,'statements'|'meetings'>&{categories:string[];manifest:Manifest};
+export type Profile={kind:'country'|'speaker'|'affiliation';id:string};
+export type Query={from:string;to:string;category:string;affiliation:string;topic:string;view:'overview'|'speakers';profile:Profile|null;page:number;search:string};
+export type CountryRow={code:string;name:string;meetings:number;interventions:number};
+export type PersonRow={speaker:number;meetings:number;interventions:number;latest:string};
+export type Group={meeting:Meeting;statements:Statement[]};
+export type Result={meetings:number;interventions:number;named:number;unnamed:number;countries:CountryRow[];categories:[string,number][];persons:PersonRow[];personCount:number;profile:null|{name:string;subtitle:string;meetings:number;interventions:number;latest:string;groups:Group[]};elapsed:number};
