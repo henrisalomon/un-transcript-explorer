@@ -8,6 +8,20 @@ describe('Filtering and profiles',()=>{
  it('counts distinct recordings without counting repeat interventions',()=>{const r=new Engine(d).query(q);expect(r.meetings).toBe(2);expect(r.interventions).toBe(5);expect(r.countries.find(c=>c.code==='FRA')?.meetings).toBe(2)});
  it('combines topic and affiliation on the same intervention',()=>{const r=new Engine(d).query({...q,affiliation:'fr',topic:'t'});expect(r.meetings).toBe(1);expect(r.interventions).toBe(1)});
  it('includes unnamed interventions and orders same-day recordings by schedule',()=>{const r=new Engine(d).query({...q,profile:{kind:'affiliation',id:'fr'}});expect(r.profile?.interventions).toBe(3);expect(r.profile?.groups.map(g=>g.meeting.id)).toEqual(['two','one']);expect(r.profile?.groups[1].statements.map(s=>s[4])).toEqual([50,90])});
+ it('counts country meeting types across all pages and applies intervention and date filters',()=>{
+  const data:Index={...d,meetings:Array.from({length:22},(_,i)=>({...d.meetings[0],id:String(i),date:i<21?'2026-01-01':'2026-02-01',category:i<15?'SC':'GA'})),statements:[]};
+  for(let i=0;i<22;i++)data.statements.push([i,0,0,0,10,i%2===0?[0]:[],'Representative',1],[i,1,-1,0,20,[],'President',2]);
+  data.meetings.push({...d.meetings[0],id:'un-only',category:'Other'});
+  data.statements.push([22,0,1,1,10,[0],'Official',1]);
+  const engine=new Engine(data),country={...q,profile:{kind:'country' as const,id:'FRA'}};
+  const profile=engine.query(country).profile!;
+  expect(profile.categories).toEqual([['SC',15],['GA',7]]);
+  expect(profile.meetings).toBe(22);expect(profile.groups).toHaveLength(20);
+  expect(engine.query({...country,page:1}).profile?.categories).toEqual(profile.categories);
+  expect(engine.query({...country,topic:'t',affiliation:'fr',to:'2026-01-31'}).profile?.categories).toEqual([['SC',8],['GA',3]]);
+  expect(engine.query({...country,category:'GA',from:'2026-02-01'}).profile?.categories).toEqual([['GA',1]]);
+  expect(engine.query({...country,affiliation:'un'}).profile?.categories).toEqual([]);
+ });
  it('keeps speaker profiles narrower than affiliations',()=>{expect(new Engine(d).query({...q,profile:{kind:'speaker',id:'a'}}).profile?.interventions).toBe(2)});
  it('handles missing filters, invalid date ranges and small countries',()=>{const e=new Engine(d);expect(e.query({...q,from:'2026-02-01',to:'2026-01-01'}).meetings).toBe(0);expect(e.query({...q,topic:'missing'}).interventions).toBe(0);expect(e.query(q).countries.some(c=>c.code==='MDV')).toBe(true);expect(countryCode('UN')).toBe('')});
 });

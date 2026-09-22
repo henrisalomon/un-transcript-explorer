@@ -27,9 +27,11 @@ export class Engine{
     const search=q.search.trim().toLocaleLowerCase();const people:PersonRow[]=[...person].filter(([p])=>!search||`${d.speakers[p].name} ${d.affiliations[d.speakers[p].a].name}`.toLocaleLowerCase().includes(search)).map(([speaker,x])=>({speaker,meetings:x.m.size,interventions:x.n,latest:x.latest})).sort((a,b)=>b.meetings-a.meetings||b.interventions-a.interventions||d.speakers[a.speaker].name.localeCompare(d.speakers[b.speaker].name));
     let profile:Result['profile']=null;
     if(q.profile){const sorted=[...groups].sort(([a],[b])=>d.meetings[b].date.localeCompare(d.meetings[a].date)||d.meetings[b].scheduled.localeCompare(d.meetings[a].scheduled)||d.meetings[a].id.localeCompare(d.meetings[b].id));
+      const profileCategories=new Map<string,number>();
+      for(const m of groups.keys()){const category=d.meetings[m].category;profileCategories.set(category,(profileCategories.get(category)||0)+1)}
       const name=q.profile.kind==='country'?(iso.getName(q.profile.id,'en')||q.profile.id):q.profile.kind==='speaker'?(d.speakers[target!]?.name||'Unknown speaker'):(d.affiliations[target!]?.name||'Unknown affiliation');
       const subtitle=q.profile.kind==='speaker'?(d.affiliations[d.speakers[target!]?.a]?.name||''):'All attributed interventions, including unnamed speakers';
-      profile={name,subtitle,meetings:sorted.length,interventions:sorted.reduce((n,[,s])=>n+s.length,0),latest:sorted[0]?d.meetings[sorted[0][0]].date:'',groups:sorted.slice(q.page*20,q.page*20+20).map(([m,statements])=>({meeting:d.meetings[m],statements:[...statements].sort((a,b)=>a[4]-b[4]||a[1]-b[1])}))};
+      profile={name,subtitle,categories:[...profileCategories].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])),meetings:sorted.length,interventions:sorted.reduce((n,[,s])=>n+s.length,0),latest:sorted[0]?d.meetings[sorted[0][0]].date:'',groups:sorted.slice(q.page*20,q.page*20+20).map(([m,statements])=>({meeting:d.meetings[m],statements:[...statements].sort((a,b)=>a[4]-b[4]||a[1]-b[1])}))};
     }
     return {meetings:meetingIds.size,interventions,named:person.size,unnamed,countries,categories:[...categories].sort((a,b)=>b[1]-a[1]),persons:people.slice(q.page*25,q.page*25+25),personCount:people.length,profile,elapsed:performance.now()-start};
   }
