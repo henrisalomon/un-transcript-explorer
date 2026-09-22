@@ -52,3 +52,9 @@ The ranked country bars and map colours show distinct matching recordings only. 
 `npm test` checks count and filter semantics, profile membership, small countries, unknown filters, same-day chronology, dictionary integrity and full-archive performance. Python tests check exporter normalization, preserved original text, and recovery from invalid input. `npm run build` type-checks and creates `dist/`.
 
 World geometry: @d3-maps/atlas 1.0.0, countries-110m, supplied as TopoJSON. The map is for navigation and does not assert official UN boundaries. Transcripts are automatic recognition outputs, including interpreted speech, and are not official UN records.
+
+## Countries tab
+
+The Countries tab compares distinct recordings per month, recording counts or percentages by meeting type, and shared participation for a selected pair. The selection includes all five permanent Security Council members plus the five highest-ranked other countries under the active filters; ties use country name. P5 countries with no matches remain visible at zero. Monthly gaps are zero-filled and partial boundary months are marked. Tables provide exact chart values and country profiles link to statements.
+
+Shared participation uses recordings with matching interventions attributed to both countries. The overlap percentage is the intersection divided by the union. “Only” is relative to the selected pair and does not exclude other countries. All date, meeting-type, affiliation and topic filters apply before counting; this is participation, not attendance or agreement.

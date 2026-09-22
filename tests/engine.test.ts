@@ -31,3 +31,27 @@ describe('Full exported archive',()=>{
  it('returns independently counted sample affiliation and topic intersections',()=>{const sample=data.statements.find(s=>s[5].length)!;const aff=data.affiliations[sample[3]].id,topic=data.topics[sample[5][0]].id;const rows=data.statements.filter(s=>s[3]===sample[3]&&s[5].includes(sample[5][0]));const r=engine.query({...q,affiliation:aff,topic});expect(r.interventions).toBe(rows.length);expect(r.meetings).toBe(new Set(rows.map(s=>s[0])).size)});
  it('benchmarks full index filtering',()=>{const values=[];for(let i=0;i<5;i++)values.push(engine.query({...q,from:'2025-01-01'}).elapsed);console.log('Full archive filter milliseconds:',values.map(x=>x.toFixed(1)).join(', '));expect(Math.min(...values)).toBeLessThan(300)});
 });
+
+describe('Country topic rankings',()=>{
+ it('counts distinct recordings from country interventions and keeps rankings stable on selection',()=>{
+  const data:Index={...d,topics:[...d.topics,{id:'peace',key:'peace',name:'Peace'}],statements:[...d.statements,[0,2,-1,0,100,[0,0,1],'',3],[1,3,-1,0,100,[1],'',4]]};
+  const engine=new Engine(data),country:Query={...q,profile:{kind:'country',id:'FRA'}};
+  const profile=engine.query(country).profile!;
+  expect(profile.topics.map(t=>[t.id,t.meetings])).toEqual([['peace',2],['t',1]]);
+  const selected=engine.query({...country,topic:'t'}).profile!;
+  expect(selected.topics).toEqual(profile.topics);expect(selected.meetings).toBe(1);
+  expect(selected.groups.flatMap(g=>g.statements).every(s=>s[3]===0&&s[5].includes(0))).toBe(true);
+  expect(engine.query({...country,affiliation:'un'}).profile?.topics).toEqual([]);
+  expect(engine.query({...country,from:'2027-01-01'}).profile?.topics).toEqual([]);
+  expect(engine.query({...country,category:'missing'}).profile?.topics).toEqual([]);
+ });
+ it('ranks all recordings before pagination and limits the chart to ten topics',()=>{
+  const topics=Array.from({length:12},(_,i)=>({id:String(i),key:String(i),name:`Topic ${String(i).padStart(2,'0')}`}));
+  const data:Index={...d,topics,meetings:Array.from({length:23},(_,i)=>({...d.meetings[0],id:String(i)})),statements:Array.from({length:23},(_,i)=>[i,0,-1,0,0,topics.map((_,t)=>t),'',0])};
+  const engine=new Engine(data),country:Query={...q,profile:{kind:'country',id:'FRA'}};
+  const profile=engine.query(country).profile!;
+  expect(profile.topics).toHaveLength(10);expect(profile.topics.map(t=>t.meetings)).toEqual(Array(10).fill(23));
+  expect(profile.topics.map(t=>t.id)).toEqual(Array.from({length:10},(_,i)=>String(i)));
+  expect(engine.query({...country,page:1}).profile?.topics).toEqual(profile.topics);
+ });
+});
