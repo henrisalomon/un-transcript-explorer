@@ -5,6 +5,28 @@ import{readFileSync}from'node:fs';
 const q:Query={from:'',to:'',category:'',affiliation:'',topic:'',view:'overview',profile:null,page:0,search:''};
 const d:Index={schema:1,meetings:[{id:'one',title:'Morning',date:'2026-01-01',scheduled:'2026-01-01T09:00:00Z',category:'SC',body:'',slug:'sc/one',file:'a'},{id:'two',title:'Afternoon, part 2',date:'2026-01-01',scheduled:'2026-01-01T15:00:00Z',category:'SC',body:'',slug:'sc/two',file:'b'}],affiliations:[{id:'fr',name:'France',code:'FRA'},{id:'un',name:'United Nations',code:'UN'},{id:'mv',name:'Maldives',code:'MDV'}],speakers:[{id:'a',name:'A',a:0},{id:'b',name:'B',a:1}],topics:[{id:'t',name:'Climate',key:'climate'}],statements:[[0,0,0,0,50,[0],'Representative',1],[0,1,-1,0,90,[],'President',2],[1,0,1,1,10,[0],'Official',1],[1,1,0,0,20,[],'Representative',2],[1,2,-1,2,30,[],'Representative',3]]};
 describe('Filtering and profiles',()=>{
+ it('defaults to recordings descending and sorts every speaker column before pagination',()=>{
+  const engine=new Engine(d);
+  expect(engine.query(q).persons.map(p=>p.speaker)).toEqual([0,1]);
+  for(const [speakerSort,first] of [['name',0],['function',1],['affiliation',0],['meetings',1],['interventions',1]] as const){
+   expect(engine.query({...q,speakerSort,speakerDirection:'asc'}).persons[0].speaker).toBe(first);
+   expect(engine.query({...q,speakerSort,speakerDirection:'desc'}).persons[0].speaker).toBe(1-first);
+  }
+  const dated:Index={...d,meetings:d.meetings.map((m,i)=>({...m,date:i?'2026-02-01':m.date})),statements:d.statements.filter(s=>s[0]===0||s[2]!==0)};
+  expect(new Engine(dated).query({...q,speakerSort:'latest',speakerDirection:'desc'}).persons.map(p=>p.speaker)).toEqual([1,0]);
+  const many:Index={...d,speakers:Array.from({length:30},(_,i)=>({id:String(i),name:`Person ${String(i).padStart(2,'0')}`,a:0})),statements:Array.from({length:30},(_,i)=>[0,i,i,0,i,[],'Representative',i])};
+  const sorted=new Engine(many).query({...q,speakerSort:'name',speakerDirection:'desc',page:1,affiliation:'fr'});
+  expect(sorted.persons.map(p=>p.speaker)).toEqual([4,3,2,1,0]);
+ });
+ it('shows distinct functions from matching interventions and searches them',()=>{
+  const data:Index={...d,statements:[...d.statements,[1,3,0,0,100,[],'Chef de Cabinet',4],[1,4,1,1,120,[],'',5]]};
+  const engine=new Engine(data);
+  expect(engine.query(q).persons.find(p=>p.speaker===0)?.functions).toEqual(['Chef de Cabinet','Representative']);
+  expect(engine.query({...q,search:'CHEF DE CABINET'}).persons.map(p=>p.speaker)).toEqual([0]);
+  expect(engine.query({...q,topic:'t'}).persons.find(p=>p.speaker===0)?.functions).toEqual(['Representative']);
+  expect(engine.query({...q,topic:'t',search:'Chef de Cabinet'}).personCount).toBe(0);
+  expect(engine.query(q).persons.find(p=>p.speaker===1)?.functions).toEqual(['Official']);
+ });
  it('counts distinct recordings without counting repeat interventions',()=>{const r=new Engine(d).query(q);expect(r.meetings).toBe(2);expect(r.interventions).toBe(5);expect(r.countries.find(c=>c.code==='FRA')?.meetings).toBe(2)});
  it('combines topic and affiliation on the same intervention',()=>{const r=new Engine(d).query({...q,affiliation:'fr',topic:'t'});expect(r.meetings).toBe(1);expect(r.interventions).toBe(1)});
  it('includes unnamed interventions and orders same-day recordings by schedule',()=>{const r=new Engine(d).query({...q,profile:{kind:'affiliation',id:'fr'}});expect(r.profile?.interventions).toBe(3);expect(r.profile?.groups.map(g=>g.meeting.id)).toEqual(['two','one']);expect(r.profile?.groups[1].statements.map(s=>s[4])).toEqual([50,90])});

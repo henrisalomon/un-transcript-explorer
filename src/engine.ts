@@ -12,7 +12,7 @@ export class Engine{
     const aid=q.affiliation?this.ai.get(q.affiliation):undefined,tid=q.topic?this.ti.get(q.topic):undefined;
     const validFilter=(!q.affiliation||aid!==undefined);
     const valid=d.meetings.map(m=>validFilter&&(!q.from||m.date>=q.from)&&(!q.to||m.date<=q.to)&&(!q.category||m.category===q.category));
-    const meetingIds=new Set<number>(),country=new Map<string,{name:string;m:Set<number>;n:number}>(),person=new Map<number,{m:Set<number>;n:number;latest:string}>();
+    const meetingIds=new Set<number>(),country=new Map<string,{name:string;m:Set<number>;n:number}>(),person=new Map<number,{m:Set<number>;n:number;latest:string;functions:Set<string>}>();
     const monthly=activityMonths(q.from>this.dateFrom?q.from:this.dateFrom,q.to&&q.to<this.dateTo?q.to:this.dateTo);
     const monthLookup=new Map(monthly.map(row=>[row.month,row]));
     const topicRecordings=new Map<number,Set<number>>();
@@ -25,7 +25,7 @@ export class Engine{
       const month=monthLookup.get(d.meetings[m].date.slice(0,7));if(month)month.interventions++;
       interventions++;meetingIds.add(m);if(p<0)unnamed++;
       const code=this.countryCodes[a];if(code){let c=country.get(code);if(!c){c={name:iso.getName(code,'en')||d.affiliations[a].name,m:new Set(),n:0};country.set(code,c)}c.m.add(m);c.n++}
-      if(p>=0){let x=person.get(p);if(!x){x={m:new Set(),n:0,latest:''};person.set(p,x)}x.m.add(m);x.n++;if(d.meetings[m].date>x.latest)x.latest=d.meetings[m].date}
+      if(p>=0){let x=person.get(p);if(!x){x={m:new Set(),n:0,latest:'',functions:new Set()};person.set(p,x)}x.m.add(m);x.n++;if(s[6].trim())x.functions.add(s[6].trim());if(d.meetings[m].date>x.latest)x.latest=d.meetings[m].date}
       if(q.profile&&((q.profile.kind==='country'&&code===q.profile.id)||(q.profile.kind==='speaker'&&p===target)||(q.profile.kind==='affiliation'&&a===target))){if(!groups.has(m))groups.set(m,[]);groups.get(m)!.push(s)}
     }
     // Recordings without statements remain part of the unfiltered archive overview.
@@ -40,7 +40,14 @@ export class Engine{
       for(const id of recordings){const m=d.meetings[id];counts.set(m.category,(counts.get(m.category)||0)+1);const key=m.date.slice(0,7);months.set(key,(months.get(key)||0)+1)}
       return {...c,recordings,categories:[...counts] as [string,number][],monthly:monthly.map(m=>months.get(m.month)||0)};
     }):[];
-    const search=q.search.trim().toLocaleLowerCase();const people:PersonRow[]=[...person].filter(([p])=>!search||`${d.speakers[p].name} ${d.affiliations[d.speakers[p].a].name}`.toLocaleLowerCase().includes(search)).map(([speaker,x])=>({speaker,meetings:x.m.size,interventions:x.n,latest:x.latest})).sort((a,b)=>b.meetings-a.meetings||b.interventions-a.interventions||d.speakers[a.speaker].name.localeCompare(d.speakers[b.speaker].name));
+    const search=q.search.trim().toLocaleLowerCase();const people:PersonRow[]=[...person].filter(([p,x])=>!search||`${d.speakers[p].name} ${[...x.functions].join(' ')} ${d.affiliations[d.speakers[p].a].name}`.toLocaleLowerCase().includes(search)).map(([speaker,x])=>({speaker,functions:[...x.functions].sort((a,b)=>a.localeCompare(b)),meetings:x.m.size,interventions:x.n,latest:x.latest})).sort((a,b)=>{
+      const column=q.speakerSort||'meetings',direction=q.speakerDirection||'desc';
+      const value=(r:PersonRow)=>column==='name'?d.speakers[r.speaker].name:column==='function'?r.functions.join('; '):column==='affiliation'?d.affiliations[d.speakers[r.speaker].a].name:r[column];
+      const av=value(a),bv=value(b);
+      if(av===''&&bv!=='')return 1;if(bv===''&&av!=='')return -1;
+      const order=typeof av==='number'&&typeof bv==='number'?av-bv:String(av).localeCompare(String(bv));
+      return order*(direction==='asc'?1:-1)||b.meetings-a.meetings||b.interventions-a.interventions||d.speakers[a.speaker].name.localeCompare(d.speakers[b.speaker].name)||a.speaker-b.speaker;
+    });
     let profile:Result['profile']=null;
     if(q.profile){const sorted=[...groups].sort(([a],[b])=>d.meetings[b].date.localeCompare(d.meetings[a].date)||d.meetings[b].scheduled.localeCompare(d.meetings[a].scheduled)||d.meetings[a].id.localeCompare(d.meetings[b].id));
       const profileCategories=new Map<string,number>();
