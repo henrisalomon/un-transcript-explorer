@@ -35,6 +35,10 @@ The exporter reads `../data`, validates one transcript at a time, and replaces t
 - Country and affiliation profiles include chairs' procedural speech. Roles are displayed, not inferred.
 - Newest meetings sort by source date, scheduled time, and stable source ID. Statements within meetings sort by recording timestamp and source order.
 
+## Filter shortcuts
+
+Quick dates offers All dates, the latest two calendar years represented in the archive, and Latest 90 days in archive. The 90-day window includes the archive's latest date and is clipped to the archive start when needed. Presets change only the date bounds. The sticky filter summary has individually removable date, meeting-type, affiliation, topic and active speaker-search chips; Clear all resets filters while preserving the current page/view context and sort. Filter changes reset result pagination, and the existing URL state supports reload and browser history. Edit filters scrolls back to the controls and focuses the start date.
+
 ## Overview charts
 
 The Hours of meetings card sums source-provided video durations once per matching recording and displays decimal hours. These are full recording lengths, including when a topic or affiliation selects only some interventions. Unavailable durations are explicitly excluded and reported; they are never estimated from transcript timestamps.
