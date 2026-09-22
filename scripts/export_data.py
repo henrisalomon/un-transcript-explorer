@@ -9,6 +9,15 @@ def norm(value):
     return ' '.join(unicodedata.normalize('NFKC', value or '').split())
 
 
+def duration_seconds(value):
+    if not isinstance(value, str) or not re.fullmatch(r'\d+:\d{2}:\d{2}', value):
+        return None
+    hours, minutes, seconds = map(int, value.split(':'))
+    if minutes >= 60 or seconds >= 60:
+        return None
+    return hours * 3600 + minutes * 60 + seconds
+
+
 def key(value):
     return hashlib.sha256(value.encode()).hexdigest()[:20]
 
@@ -54,7 +63,8 @@ def export(archive, output):
             meetings.append({'id': key(slug), 'title': norm(v.get('clean_title') or v.get('title')),
                              'date': date, 'scheduled': v.get('scheduled_time') or date,
                              'category': norm(v.get('category')) or 'Unclassified',
-                             'body': norm(v.get('body')), 'slug': slug})
+                             'body': norm(v.get('body')), 'slug': slug,
+                             'durationSeconds': duration_seconds(v.get('duration'))})
             for ordinal, st in enumerate(transcript['data']):
                 sp = st.get('speaker') or {}
                 code, label = norm(sp.get('affiliation')), norm(sp.get('affiliation_full'))

@@ -35,6 +35,14 @@ The exporter reads `../data`, validates one transcript at a time, and replaces t
 - Country and affiliation profiles include chairs' procedural speech. Roles are displayed, not inferred.
 - Newest meetings sort by source date, scheduled time, and stable source ID. Statements within meetings sort by recording timestamp and source order.
 
+## Overview charts
+
+The Hours of meetings card sums source-provided video durations once per matching recording and displays decimal hours. These are full recording lengths, including when a topic or affiliation selects only some interventions. Unavailable durations are explicitly excluded and reported; they are never estimated from transcript timestamps.
+
+Monthly activity counts distinct recordings under the active filters. Zero-activity months remain visible. Boundary months clipped by the archive or selected dates are marked as partial. Selecting a month sets the date range; Reset dates preserves other filters. Counts describe the downloaded archive, not complete UN activity.
+
+The ranked country bars and map colours show distinct matching recordings only. Hovering or focusing a mapped country shows its meeting count and share of all filtered meetings. Countries can appear in the same recording, so these shares are not additive. Country profiles retain their meeting-type breakdown above the meeting list.
+
 ## Data files
 
 `manifest.json` points to a content-hashed index containing metadata dictionaries and compact statement rows. The row fields, in order, are meeting index, statement ordinal, speaker index (-1 if absent), affiliation index, start seconds, topic indices, role, and source statement number. Content-hashed `text/*.json` files contain arrays of statement text in source order, preserving paragraph breaks. Deploy the index and text snapshot together.

@@ -1,4 +1,4 @@
-export type Meeting={id:string;title:string;date:string;scheduled:string;category:string;body:string;slug:string;file:string};
+export type Meeting={durationSeconds?:number|null;id:string;title:string;date:string;scheduled:string;category:string;body:string;slug:string;file:string};
 export type Affiliation={id:string;code:string;name:string};
 export type Speaker={id:string;name:string;a:number};
 export type Topic={id:string;key:string;name:string};
@@ -11,4 +11,5 @@ export type Query={from:string;to:string;category:string;affiliation:string;topi
 export type CountryRow={code:string;name:string;meetings:number;interventions:number};
 export type PersonRow={speaker:number;meetings:number;interventions:number;latest:string};
 export type Group={meeting:Meeting;statements:Statement[]};
-export type Result={meetings:number;interventions:number;named:number;unnamed:number;countries:CountryRow[];categories:[string,number][];persons:PersonRow[];personCount:number;profile:null|{name:string;subtitle:string;meetings:number;interventions:number;latest:string;categories:[string,number][];groups:Group[]};elapsed:number};
+export type MonthlyActivity={month:string;from:string;to:string;partial:boolean;meetings:number;interventions:number};
+export type Result={durationSeconds:number;missingDurations:number;monthly:MonthlyActivity[];meetings:number;interventions:number;named:number;unnamed:number;countries:CountryRow[];categories:[string,number][];persons:PersonRow[];personCount:number;profile:null|{name:string;subtitle:string;meetings:number;interventions:number;latest:string;categories:[string,number][];groups:Group[]};elapsed:number};
