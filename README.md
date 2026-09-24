@@ -1,6 +1,10 @@
 # UN Transcript Explorer
 
-Public, static dashboard of the downloaded English UN transcript archive. React/TypeScript renders the interface. A Web Worker filters a compact index; full text is fetched per recording only when a meeting is expanded. There is no backend database or server-side Python process.
+UN meeting transcripts are difficult to search across speakers, countries, and topics. This explorer turns 1,283 English recordings and 95,395 interventions into a browsable archive where you can filter meetings, compare country participation, and read the original transcript text. [Open the live explorer](https://henrisalomon.github.io/un-transcript-explorer/).
+
+![Main explorer view showing the overview and filters](docs/explorer.png)
+
+The snapshot reflects the archive exported on 22 September 2026; counts change when the data is refreshed. React and TypeScript render the static site, while a Web Worker filters the index and loads full text only when a recording is expanded.
 
 ## Local development
 

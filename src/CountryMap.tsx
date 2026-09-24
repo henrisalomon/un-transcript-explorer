@@ -7,7 +7,7 @@ import type {CountryRow} from './types';
 const fmt=(n:number)=>n.toLocaleString('en-US');
 export default function CountryMap({rows,total,metric,onCountry}:{rows:CountryRow[];total:number;metric:Metric;onCountry:(s:string)=>void}){
  const [shapes,setShapes]=useState<Feature<Geometry>[]>([]),[error,setError]=useState(false),[hover,setHover]=useState<{code:string;name:string}|null>(null);
- useEffect(()=>{let alive=true;fetch('/world.json').then(r=>{if(!r.ok)throw Error();return r.json()}).then(w=>{const collection=feature(w,w.objects.features) as unknown as {features:Feature<Geometry>[]};if(alive)setShapes(collection.features.filter(f=>f.properties?.id!=='ATA'))}).catch(()=>{if(alive)setError(true)});return()=>{alive=false}},[]);
+ useEffect(()=>{let alive=true;fetch(import.meta.env.BASE_URL+'world.json').then(r=>{if(!r.ok)throw Error();return r.json()}).then(w=>{const collection=feature(w,w.objects.features) as unknown as {features:Feature<Geometry>[]};if(alive)setShapes(collection.features.filter(f=>f.properties?.id!=='ATA'))}).catch(()=>{if(alive)setError(true)});return()=>{alive=false}},[]);
  const lookup=new Map(rows.map(r=>[r.code,r])),max=Math.max(1,...rows.map(r=>r[metric]));
  const ticks=[...new Set([1,Math.round(1+(max-1)*.25),Math.round(1+(max-1)*.5),Math.round(1+(max-1)*.75),max])];
  const color=(n:number)=>`color-mix(in srgb, var(--blue) ${20+(max===1?1:(n-1)/(max-1))*80}%, var(--map-low))`;
