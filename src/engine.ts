@@ -16,11 +16,13 @@ export class Engine{
     const monthly=activityMonths(q.from>this.dateFrom?q.from:this.dateFrom,q.to&&q.to<this.dateTo?q.to:this.dateTo);
     const monthLookup=new Map(monthly.map(row=>[row.month,row]));
     const topicRecordings=new Map<number,Set<number>>();
+    const overviewTopicRecordings=new Map<number,Set<number>>();
     const groups=new Map<number,Statement[]>();let interventions=0,unnamed=0;
     const target=q.profile?.kind==='speaker'?this.pi.get(q.profile.id):q.profile?.kind==='affiliation'?this.ai.get(q.profile.id):undefined;
     for(const s of d.statements){const [m,,p,a,,topics]=s;if(!valid[m]||(q.affiliation&&a!==aid))continue;
       // Keep topic choices stable while the selected topic filters the statements.
       if(q.profile?.kind==='country'&&this.countryCodes[a]===q.profile.id){for(const t of topics){if(!topicRecordings.has(t))topicRecordings.set(t,new Set());topicRecordings.get(t)!.add(m)}}
+      for(const t of topics){if(!overviewTopicRecordings.has(t))overviewTopicRecordings.set(t,new Set());overviewTopicRecordings.get(t)!.add(m)}
       if(q.topic&&(tid===undefined||!topics.includes(tid)))continue;
       const month=monthLookup.get(d.meetings[m].date.slice(0,7));if(month)month.interventions++;
       interventions++;meetingIds.add(m);if(p<0)unnamed++;
@@ -56,6 +58,7 @@ export class Engine{
       const subtitle=q.profile.kind==='speaker'?(d.affiliations[d.speakers[target!]?.a]?.name||''):'All attributed interventions, including unnamed speakers';
       profile={name,subtitle,topics:[...topicRecordings].map(([t,ids])=>({...d.topics[t],meetings:ids.size})).sort((a,b)=>b.meetings-a.meetings||a.name.localeCompare(b.name)||a.id.localeCompare(b.id)).slice(0,10),categories:[...profileCategories].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])),meetings:sorted.length,interventions:sorted.reduce((n,[,s])=>n+s.length,0),latest:sorted[0]?d.meetings[sorted[0][0]].date:'',groups:sorted.slice(q.page*20,q.page*20+20).map(([m,statements])=>({meeting:d.meetings[m],statements:[...statements].sort((a,b)=>a[4]-b[4]||a[1]-b[1])}))};
     }
-    return {countryActivity,durationSeconds,missingDurations,monthly,meetings:meetingIds.size,interventions,named:person.size,unnamed,countries,categories:[...categories].sort((a,b)=>b[1]-a[1]),persons:people.slice(q.page*25,q.page*25+25),personCount:people.length,profile,elapsed:performance.now()-start};
+    const topics=[...overviewTopicRecordings].map(([t,ids])=>({...d.topics[t],meetings:ids.size})).sort((a,b)=>b.meetings-a.meetings||a.name.localeCompare(b.name)||a.id.localeCompare(b.id));
+    return {countryActivity,topics,durationSeconds,missingDurations,monthly,meetings:meetingIds.size,interventions,named:person.size,unnamed,countries,categories:[...categories].sort((a,b)=>b[1]-a[1]),persons:people.slice(q.page*25,q.page*25+25),personCount:people.length,profile,elapsed:performance.now()-start};
   }
 }
