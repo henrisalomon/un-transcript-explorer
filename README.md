@@ -26,7 +26,7 @@ python3 -m unittest discover -s tests -p 'test_*.py'
 npm run build
 ```
 
-The exporter reads `../data`, validates one transcript at a time, and replaces the generated snapshot only after completion. Invalid files are listed in `manifest.json`; they are not included in totals. A failed export preserves the previous snapshot. Publish the successful build through Sites using the existing project in `.openai/hosting.json`. Do not create a new Site on refresh. Publication is manual; no scheduler is configured.
+The exporter reads `../data`, validates one transcript at a time, and replaces the generated snapshot only after completion. Invalid files are listed in `manifest.json`; they are not included in totals. A failed export preserves the previous snapshot. Commit and push a successful refresh to `main`; the GitHub Pages workflow builds and deploys the site.
 
 ## Counts and identity
 
